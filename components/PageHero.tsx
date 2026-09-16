@@ -14,11 +14,16 @@ export default function PageHero({
   title,
   lede,
   secondary,
+  ctaHref = "#enquiry",
+  ctaLabel = "Request a quote",
 }: {
   eyebrow: string;
   title: string;
   lede: string;
   secondary?: ReactNode;
+  /** Pages without their own enquiry form route to Contact instead. */
+  ctaHref?: string;
+  ctaLabel?: string;
 }) {
   return (
     <section className="border-b border-line bg-navy-deep pb-[var(--section-pad)] pt-[calc(var(--section-pad)+72px)]">
@@ -36,8 +41,8 @@ export default function PageHero({
         </p>
 
         <div className="mt-10 flex flex-wrap items-center gap-4" data-lift>
-          <a href="#enquiry" className="btn-base btn-filled">
-            Request a quote
+          <a href={ctaHref} className="btn-base btn-filled">
+            {ctaLabel}
           </a>
           {secondary}
         </div>
