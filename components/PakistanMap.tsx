@@ -26,20 +26,28 @@ import { useEffect, useId, useRef } from "react";
    and the cities on it are recognisable:
      x = (lon − 60) × 29.4      y = (37 − lat) × 42.86
    A schematic, not a survey. */
+/* `side` puts a label on the other side of its node. Two pairs sit close
+   enough that a label would otherwise run straight through its
+   neighbour: Faisalabad against Lahore on the molasses corridor, and
+   Karachi against Port Qasim on the containers corridor and the About
+   inset. The further-left city of each pair reads leftwards. */
 const CITY = {
   gwadar: { x: 69, y: 509, name: "Gwadar" },
-  karachi: { x: 206, y: 520, name: "Karachi" },
+  karachi: { x: 206, y: 520, name: "Karachi", side: "left" },
   portQasim: { x: 216, y: 524, name: "Port Qasim" },
   hyderabad: { x: 246, y: 497, name: "Hyderabad" },
   sukkur: { x: 260, y: 399, name: "Sukkur" },
   quetta: { x: 206, y: 292, name: "Quetta" },
   multan: { x: 338, y: 291, name: "Multan" },
-  faisalabad: { x: 385, y: 239, name: "Faisalabad" },
+  faisalabad: { x: 385, y: 239, name: "Faisalabad", side: "left" },
   sargodha: { x: 372, y: 211, name: "Sargodha" },
   lahore: { x: 422, y: 234, name: "Lahore" },
   islamabad: { x: 384, y: 142, name: "Islamabad" },
   peshawar: { x: 340, y: 128, name: "Peshawar" },
-} as const;
+} as const satisfies Record<
+  string,
+  { x: number; y: number; name: string; side?: "left" }
+>;
 
 type CityKey = keyof typeof CITY;
 
@@ -71,9 +79,12 @@ const CORRIDORS = {
     stops: ["portQasim", "hyderabad", "sukkur", "multan", "faisalabad", "sargodha"],
     caption: "Port Qasim inland to central and northern Punjab",
   },
+  /* Molasses runs the other way to edible oil: down from the mill belt to
+     the distilleries and to Port Qasim for export, rather than inland
+     from the port. */
   molasses: {
-    stops: ["hyderabad", "sukkur", "multan", "faisalabad", "lahore"],
-    caption: "Sugar-mill belt to processing and export",
+    stops: ["lahore", "faisalabad", "multan", "sukkur", "hyderabad", "portQasim"],
+    caption: "Punjab and Sindh mill belt down to processing and the port",
   },
   containers: {
     stops: ["portQasim", "karachi", "sukkur", "multan", "lahore"],
@@ -113,6 +124,9 @@ export default function PakistanMap({
   const corridorPath = stops
     .map((key, index) => `${index === 0 ? "M" : "L"}${CITY[key].x} ${CITY[key].y}`)
     .join(" ");
+
+  const left = (key: CityKey) =>
+    "side" in CITY[key] && (CITY[key] as { side?: string }).side === "left";
 
   /* Three anonymous movement nodes, spaced along the corridor. They mark
      that the network is working. They do not identify anything on it. */
@@ -262,8 +276,9 @@ export default function PakistanMap({
             <g key={key} data-node>
               <circle cx={CITY[key].x} cy={CITY[key].y} r={3.5} className="fill-cream" />
               <text
-                x={CITY[key].x + 11}
+                x={CITY[key].x + (left(key) ? -11 : 11)}
                 y={CITY[key].y + 4}
+                textAnchor={left(key) ? "end" : "start"}
                 className="fill-mist font-mono text-[12px] tracking-[0.08em] max-md:text-[15px]"
               >
                 {CITY[key].name}
