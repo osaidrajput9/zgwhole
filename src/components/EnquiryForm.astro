@@ -1,0 +1,301 @@
+---
+/* Enquiry form — seven fields.
+ *
+ * Name, company and telephone are required; the PRD's field table marks
+ * everything else optional, and email is optional on purpose: in this
+ * market plenty of buyers give a mobile number and never check email.
+ * Telephone is the channel that has to work.
+ *
+ * On a service page the cargo select is pre-filled to that page's cargo.
+ *
+ * This is a floating surface, so it is glass.
+ *
+ * PLACEHOLDER: no submission endpoint exists yet. Point ACTION at the
+ * real handler once it is built; the loading, error and success states
+ * below already cover a slow or failed response.
+ */
+
+interface Props {
+  cargo?: "edible-oil" | "molasses" | "chemicals" | "containers" | "other";
+  heading?: string;
+  lede?: string;
+}
+
+const {
+  cargo,
+  heading = "Request a quote",
+  lede = "Tell us what is moving and where it has to get to. We will come back with a price, not a callback to ask what you meant.",
+} = Astro.props;
+
+const ACTION = "/api/enquiry";
+
+const cargoOptions = [
+  { value: "edible-oil", label: "Edible oil" },
+  { value: "molasses",   label: "Molasses" },
+  { value: "chemicals",  label: "Chemicals" },
+  { value: "containers", label: "Containers and finished goods" },
+  { value: "other",      label: "Other" },
+];
+---
+
+<div class="enquiry glass" data-lift-group>
+  <div class="enquiry__intro">
+    <h2 class="h2" data-reveal>{heading}</h2>
+    <p class="prose enquiry__lede" data-lift>{lede}</p>
+  </div>
+
+  <form class="enquiry__form" action={ACTION} method="post" data-enquiry novalidate data-lift>
+    <div class="field">
+      <label for="eq-name">Name <span class="field__req" aria-hidden="true">Required</span></label>
+      <input id="eq-name" name="name" type="text" autocomplete="name" required
+             aria-describedby="eq-name-error" />
+      <p class="field__error" id="eq-name-error" data-error hidden></p>
+    </div>
+
+    <div class="field">
+      <label for="eq-company">Company name <span class="field__req" aria-hidden="true">Required</span></label>
+      <input id="eq-company" name="company" type="text" autocomplete="organization" required
+             aria-describedby="eq-company-error" />
+      <p class="field__error" id="eq-company-error" data-error hidden></p>
+    </div>
+
+    <div class="field">
+      <label for="eq-tel">Telephone <span class="field__req" aria-hidden="true">Required</span></label>
+      <input id="eq-tel" name="telephone" type="tel" autocomplete="tel" required
+             aria-describedby="eq-tel-error" />
+      <p class="field__error" id="eq-tel-error" data-error hidden></p>
+    </div>
+
+    <div class="field">
+      <label for="eq-email">Email <span class="field__opt">Optional</span></label>
+      <input id="eq-email" name="email" type="email" autocomplete="email"
+             aria-describedby="eq-email-error" />
+      <p class="field__error" id="eq-email-error" data-error hidden></p>
+    </div>
+
+    <div class="field">
+      <label for="eq-cargo">What are you moving <span class="field__opt">Optional</span></label>
+      <select id="eq-cargo" name="cargo">
+        {!cargo && <option value="">Select a cargo type</option>}
+        {cargoOptions.map((o) => (
+          <option value={o.value} selected={cargo === o.value}>{o.label}</option>
+        ))}
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="eq-route">Route <span class="field__opt">Optional</span></label>
+      <input id="eq-route" name="route" type="text" placeholder="Origin and destination" />
+    </div>
+
+    <div class="field field--wide">
+      <label for="eq-volume">Volume and frequency <span class="field__opt">Optional</span></label>
+      <input id="eq-volume" name="volume" type="text" placeholder="For example, two tankers a week" />
+    </div>
+
+    <div class="enquiry__submit">
+      <button class="btn btn--primary" type="submit" data-submit>
+        <span data-submit-label>Send enquiry</span>
+      </button>
+      <p class="enquiry__hint mono">Three fields are all we need to price it</p>
+    </div>
+
+    <p class="enquiry__status" role="status" aria-live="polite" data-status hidden></p>
+  </form>
+</div>
+
+<script>
+  import { gsap } from "gsap";
+  import { EASE, DUR, prefersReducedMotion } from "../lib/motion.js";
+
+  document.querySelectorAll<HTMLFormElement>("[data-enquiry]").forEach((form) => {
+    const status = form.querySelector<HTMLElement>("[data-status]");
+    const button = form.querySelector<HTMLButtonElement>("[data-submit]");
+    const label  = form.querySelector<HTMLElement>("[data-submit-label]");
+
+    const messages: Record<string, string> = {
+      name: "Enter your name so we know who is asking.",
+      company: "Enter your company name.",
+      telephone: "Enter a telephone number. This is how we will reach you.",
+      email: "Check the email address — it does not look complete.",
+    };
+
+    const setError = (field: HTMLInputElement, message: string | null) => {
+      const box = field.parentElement?.querySelector<HTMLElement>("[data-error]");
+      field.setAttribute("aria-invalid", message ? "true" : "false");
+      if (!box) return;
+      box.textContent = message ?? "";
+      box.hidden = !message;
+    };
+
+    const validate = () => {
+      const invalid: HTMLInputElement[] = [];
+
+      form.querySelectorAll<HTMLInputElement>("input[required]").forEach((field) => {
+        const empty = !field.value.trim();
+        setError(field, empty ? messages[field.name] : null);
+        if (empty) invalid.push(field);
+      });
+
+      const email = form.querySelector<HTMLInputElement>("#eq-email");
+      if (email && email.value.trim() && !email.checkValidity()) {
+        setError(email, messages.email);
+        invalid.push(email);
+      } else if (email) {
+        setError(email, null);
+      }
+
+      return invalid;
+    };
+
+    const say = (message: string, tone: "error" | "ok") => {
+      if (!status) return;
+      status.textContent = message;
+      status.dataset.tone = tone;
+      status.hidden = false;
+
+      if (prefersReducedMotion()) {
+        gsap.set(status, { opacity: 1, y: 0 });
+        return;
+      }
+      gsap.fromTo(
+        status,
+        { opacity: 0, y: 8 },
+        { opacity: 1, y: 0, duration: DUR.lift, ease: EASE.lift },
+      );
+    };
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const invalid = validate();
+      if (invalid.length) {
+        invalid[0].focus();
+        say("Check the highlighted fields and try again.", "error");
+        return;
+      }
+
+      if (button && label) {
+        button.disabled = true;
+        label.textContent = "Sending…";
+      }
+
+      try {
+        const response = await fetch(form.action || "/api/enquiry", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(Object.fromEntries(new FormData(form))),
+        });
+        if (!response.ok) throw new Error(String(response.status));
+
+        form.reset();
+        say("Thanks — we have your enquiry and will come back with a price.", "ok");
+      } catch {
+        say(
+          "Could not send that just now. Try again, or call us and we will take the details over the phone.",
+          "error",
+        );
+      } finally {
+        if (button && label) {
+          button.disabled = false;
+          label.textContent = "Send enquiry";
+        }
+      }
+    });
+
+    /* Clear an error as soon as the person fixes it, not on next submit. */
+    form.querySelectorAll<HTMLInputElement>("input").forEach((field) => {
+      field.addEventListener("input", () => {
+        if (field.getAttribute("aria-invalid") === "true") setError(field, null);
+      });
+    });
+  });
+</script>
+
+<style>
+  .enquiry { padding: var(--space-40); }
+
+  .enquiry__intro { max-width: 48ch; }
+  .enquiry__lede { margin-top: var(--space-20); }
+
+  .enquiry__form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-20);
+    margin-top: var(--space-40);
+  }
+
+  .field { display: flex; flex-direction: column; gap: var(--space-8); }
+  .field--wide { grid-column: 1 / -1; }
+
+  .field label {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-8);
+    font-size: var(--size-small);
+    color: var(--text-primary);
+  }
+
+  .field__req, .field__opt {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: var(--tracking-mono);
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .field input,
+  .field select {
+    min-height: 44px;
+    padding: var(--space-12);
+    background: var(--fill-subtle);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-primary);
+    transition: border-color var(--hover-duration) var(--hover-ease),
+                background-color var(--hover-duration) var(--hover-ease);
+  }
+  .field input::placeholder { color: var(--text-muted); }
+  .field input:hover, .field select:hover { border-color: var(--border-strong); }
+  .field input[aria-invalid="true"] { border-color: var(--cream); }
+
+  .field select {
+    appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+                      linear-gradient(135deg, currentColor 50%, transparent 50%);
+    background-position: right 18px center, right 13px center;
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
+  }
+
+  .field__error {
+    font-size: var(--size-small);
+    color: var(--cream);
+  }
+
+  .enquiry__submit {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-16);
+    margin-top: var(--space-12);
+  }
+  .enquiry__hint { color: var(--text-muted); }
+
+  .enquiry__status {
+    grid-column: 1 / -1;
+    padding: var(--space-16);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    font-size: var(--size-small);
+  }
+  /* Tone is carried by the wording, not by colour alone. */
+  .enquiry__status[data-tone="ok"] { color: var(--text-primary); }
+  .enquiry__status[data-tone="error"] { color: var(--text-primary); }
+
+  @media (max-width: 720px) {
+    .enquiry { padding: var(--space-24); }
+    .enquiry__form { grid-template-columns: 1fr; }
+  }
+</style>

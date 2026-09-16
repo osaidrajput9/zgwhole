@@ -1,0 +1,288 @@
+---
+/* PakistanMap — built once, used at three scales.
+ *
+ *   scale="hero"     full frame, home page
+ *   scale="inset"    half width, About — the three branches
+ *   scale="corridor" simplified, service pages — one corridor only
+ *
+ * This is a diagram of an active network, not a feed. It carries no
+ * vehicle identifiers and no tonnages, and nothing here is described as
+ * live. Movement is anonymous by construction: the nodes breathe, they
+ * do not report.
+ *
+ * Amber is the corridor, and this is the only component allowed to use
+ * it. Context roads are steel; the outline is a border value.
+ *
+ * The corridor draws on by scaling a clip mask on the X axis — a
+ * transform — rather than animating a stroke property, so the reveal
+ * stays within transform and opacity.
+ */
+
+interface Props {
+  scale?: "hero" | "inset" | "corridor";
+  /** Which corridor to draw when scale="corridor". */
+  corridor?: "edible-oil" | "molasses" | "containers";
+  /** Accessible description of what the diagram shows. */
+  label: string;
+  class?: string;
+}
+
+const {
+  scale = "corridor",
+  corridor = "edible-oil",
+  label,
+  class: className = "",
+} = Astro.props;
+
+/* Plotted positions, projected from longitude and latitude so the
+   country and the cities on it are recognisable:
+     x = (lon − 60) × 29.4      y = (37 − lat) × 42.86
+   A schematic, not a survey — close enough to read as Pakistan, not
+   precise enough to navigate by. */
+const CITY = {
+  gwadar:    { x: 69,  y: 509, name: "Gwadar" },
+  karachi:   { x: 206, y: 520, name: "Karachi" },
+  portQasim: { x: 216, y: 524, name: "Port Qasim" },
+  hyderabad: { x: 246, y: 497, name: "Hyderabad" },
+  sukkur:    { x: 260, y: 399, name: "Sukkur" },
+  quetta:    { x: 206, y: 292, name: "Quetta" },
+  multan:    { x: 338, y: 291, name: "Multan" },
+  faisalabad:{ x: 385, y: 239, name: "Faisalabad" },
+  sargodha:  { x: 372, y: 211, name: "Sargodha" },
+  lahore:    { x: 422, y: 234, name: "Lahore" },
+  islamabad: { x: 384, y: 142, name: "Islamabad" },
+  peshawar:  { x: 340, y: 128, name: "Peshawar" },
+} as const;
+
+type CityKey = keyof typeof CITY;
+
+/* The national outline, traced through the same projection: the northern
+   spur, the Durand Line down the west, the Punjab border east, and the
+   long Makran coast back along the bottom. */
+const OUTLINE =
+  "M412 4 L470 51 L500 64 L429 107 L429 171 L450 257 L426 300 " +
+  "L409 343 L382 386 L323 394 L303 450 L312 484 L323 544 L259 561 " +
+  "L220 566 L197 523 L176 506 L147 510 L118 506 L88 506 L47 506 " +
+  "L56 459 L47 407 L27 343 L27 304 L68 326 L120 317 L185 304 " +
+  "L220 249 L250 227 L273 219 L291 171 L309 133 L326 124 L323 86 " +
+  "L338 43 Z";
+
+/* Context roads — the wider network the corridor sits inside. */
+const CONTEXT: CityKey[][] = [
+  ["karachi", "quetta"],
+  ["quetta", "multan"],
+  ["islamabad", "peshawar"],
+  ["lahore", "islamabad"],
+  ["gwadar", "karachi"],
+];
+
+/* One corridor per service. Highest-volume routes are still an open
+   question in the PRD, so these follow the assumed Karachi–Sargodha
+   spine and should be revisited once the real volumes are confirmed. */
+const CORRIDORS: Record<string, { stops: CityKey[]; caption: string }> = {
+  "edible-oil": {
+    stops: ["portQasim", "hyderabad", "sukkur", "multan", "faisalabad", "sargodha"],
+    caption: "Port Qasim inland to central and northern Punjab",
+  },
+  molasses: {
+    stops: ["hyderabad", "sukkur", "multan", "faisalabad", "lahore"],
+    caption: "Sugar-mill belt to processing and export",
+  },
+  containers: {
+    stops: ["portQasim", "karachi", "sukkur", "multan", "lahore"],
+    caption: "Port Qasim to the upcountry distribution centres",
+  },
+};
+
+const branches: CityKey[] = ["karachi", "portQasim", "sargodha"];
+
+const active = CORRIDORS[corridor];
+
+/* What gets drawn at each scale. */
+const stops: CityKey[] =
+  scale === "inset" ? branches
+  : scale === "hero" ? (CORRIDORS["edible-oil"].stops as unknown as CityKey[])
+  : (active.stops as unknown as CityKey[]);
+
+const showContext = scale !== "inset";
+const showCorridor = scale !== "inset";
+
+const path = (keys: readonly CityKey[]) =>
+  keys.map((k, i) => `${i === 0 ? "M" : "L"}${CITY[k].x} ${CITY[k].y}`).join(" ");
+
+const corridorPath = path(stops);
+
+/* Three anonymous movement nodes, spaced along the corridor. They mark
+   that the network is working. They do not identify anything on it. */
+const pulses = showCorridor
+  ? [0.22, 0.52, 0.81].map((t) => {
+      const span = (stops.length - 1) * t;
+      const i = Math.min(Math.floor(span), stops.length - 2);
+      const f = span - i;
+      const a = CITY[stops[i]];
+      const b = CITY[stops[i + 1]];
+      return { x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f };
+    })
+  : [];
+
+const uid = Math.random().toString(36).slice(2, 8);
+---
+
+<figure class={`map map--${scale} ${className}`.trim()} data-map data-scale={scale}>
+  <svg
+    viewBox="10 -14 520 600"
+    role="img"
+    aria-label={label}
+    preserveAspectRatio="xMidYMid meet"
+  >
+    <defs>
+      <clipPath id={`draw-${uid}`} clipPathUnits="userSpaceOnUse">
+        <rect data-draw x="10" y="-14" width="520" height="600" />
+      </clipPath>
+    </defs>
+
+    <path class="map__outline" d={OUTLINE} />
+
+    {showContext && (
+      <g class="map__context">
+        {CONTEXT.map(([a, b]) => (
+          <line x1={CITY[a].x} y1={CITY[a].y} x2={CITY[b].x} y2={CITY[b].y} />
+        ))}
+      </g>
+    )}
+
+    <g clip-path={`url(#draw-${uid})`}>
+      {showCorridor && <path class="map__corridor" d={corridorPath} data-corridor />}
+
+      {pulses.map((p, i) => (
+        <circle class="map__pulse" data-pulse data-index={i} cx={p.x} cy={p.y} r="4" />
+      ))}
+    </g>
+
+    <g class="map__nodes">
+      {stops.map((k) => (
+        <g class="map__node" data-node>
+          <circle cx={CITY[k].x} cy={CITY[k].y} r="3.5" />
+          <text x={CITY[k].x + 11} y={CITY[k].y + 4}>{CITY[k].name}</text>
+        </g>
+      ))}
+    </g>
+  </svg>
+
+  {scale === "corridor" && (
+    <figcaption class="mono map__caption">{active.caption}</figcaption>
+  )}
+</figure>
+
+<script>
+  import { gsap } from "gsap";
+  import { EASE, DUR, START, STAGGER, flow, prefersReducedMotion } from "../lib/motion.js";
+  import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+  document.querySelectorAll<HTMLElement>("[data-map]").forEach((map) => {
+    const mask   = map.querySelector<SVGRectElement>("[data-draw]");
+    const nodes  = map.querySelectorAll<SVGGElement>("[data-node]");
+    const pulses = map.querySelectorAll<SVGCircleElement>("[data-pulse]");
+
+    if (!mask) return;
+
+    /* Reduced motion: final state, instantly, and no looping pulse. */
+    if (prefersReducedMotion()) {
+      gsap.set(mask, { scaleX: 1 });
+      gsap.set(nodes, { opacity: 1 });
+      gsap.set(pulses, { opacity: 0.55, scale: 1 });
+      return;
+    }
+
+    gsap.set(mask, { scaleX: 0, transformOrigin: "left center" });
+    gsap.set(nodes, { opacity: 0 });
+    gsap.set(pulses, { opacity: 0, scale: 0.6, transformOrigin: "center" });
+
+    /* Below 768px the map is a static draw-on-enter: no scrub, no
+       parallax, and the looping pulse is left off. */
+    const isNarrow = window.matchMedia("(max-width: 768px)").matches;
+
+    const tl = gsap.timeline({ paused: true });
+
+    /* Positions are derived from the vocabulary rather than written as
+       offsets, so the nodes and pulses finish as the corridor finishes
+       drawing. Nothing here is a raw number. */
+    tl.to(mask, { scaleX: 1, duration: DUR.carry, ease: EASE.carry }, 0)
+      .to(
+        nodes,
+        { opacity: 1, duration: DUR.lift, ease: EASE.lift, stagger: STAGGER },
+        DUR.lift,
+      )
+      .to(
+        pulses,
+        { opacity: 0.55, scale: 1, duration: DUR.lift, ease: EASE.lift },
+        DUR.carry - DUR.lift,
+      );
+
+    ScrollTrigger.create({
+      trigger: map,
+      start: START,
+      once: true,
+      onEnter: () => {
+        tl.play();
+        if (isNarrow) return;
+
+        /* Anonymous movement: the nodes breathe out of phase. Transform
+           and opacity only, and nothing here identifies a vehicle. */
+        pulses.forEach((p, i) => {
+          flow(p, { opacity: 0.2, scale: 1.7 }, { offset: i * 1.2 });
+        });
+      },
+    });
+  });
+</script>
+
+<style>
+  .map { margin: 0; }
+  .map svg { width: 100%; height: auto; overflow: visible; }
+
+  .map__outline {
+    fill: var(--fill-subtle);
+    stroke: var(--border-strong);
+    stroke-width: 1.25;
+    stroke-linejoin: round;
+  }
+
+  .map__context line {
+    stroke: var(--steel);
+    stroke-width: 1;
+    stroke-dasharray: 3 5;
+    opacity: 0.5;
+  }
+
+  /* The one place amber is permitted. */
+  .map__corridor {
+    fill: none;
+    stroke: var(--amber);
+    stroke-width: 2.25;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .map__pulse { fill: var(--amber); }
+
+  .map__node circle { fill: var(--cream); }
+  .map__node text {
+    fill: var(--text-secondary);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+  }
+
+  .map__caption {
+    margin-top: var(--space-16);
+    color: var(--text-muted);
+  }
+
+  .map--inset svg { max-width: 420px; }
+  .map--corridor svg { max-width: 520px; }
+
+  @media (max-width: 768px) {
+    .map__node text { font-size: 15px; }
+  }
+</style>

@@ -1,0 +1,46 @@
+---
+/* Client wall — typographic chips, no logos. Hover brightens.
+   Publication permission for these names is granted in the PRD. */
+
+interface Props {
+  names: string[];
+  note?: string;
+}
+const { names, note } = Astro.props;
+---
+
+<div class="wall" data-lift-group>
+  <ul class="wall__list">
+    {names.map((n) => (
+      <li class="wall__chip" data-lift>{n}</li>
+    ))}
+  </ul>
+  {note && <p class="wall__note mono" data-lift>{note}</p>}
+</div>
+
+<style>
+  .wall__list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-8);
+  }
+
+  .wall__chip {
+    padding: var(--space-12) var(--space-16);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-secondary);
+    font-size: var(--size-small);
+    letter-spacing: -0.005em;
+    transition: color var(--hover-duration) var(--hover-ease),
+                border-color var(--hover-duration) var(--hover-ease),
+                background-color var(--hover-duration) var(--hover-ease);
+  }
+  .wall__chip:hover {
+    color: var(--text-primary);
+    border-color: var(--border-strong);
+    background: var(--fill-hover);
+  }
+
+  .wall__note { margin-top: var(--space-32); }
+</style>

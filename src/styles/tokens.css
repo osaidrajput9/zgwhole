@@ -1,0 +1,382 @@
+/* ------------------------------------------------------------------ *
+ * tokens.css — the design system.
+ *
+ * This is the ONLY file in the codebase that contains a literal colour
+ * value. Every component references these custom properties. Built from
+ * docs/zia-prd.md § Design system.
+ * ------------------------------------------------------------------ */
+
+:root {
+  /* --- Colour ------------------------------------------------------ *
+   * Contrast figures are measured against --navy.
+   * The previous secondary blue #2457FF is dropped: ~2.6:1 on navy,
+   * effectively invisible. Mist takes over link and interactive duty.  */
+
+  --navy:      #011F7B;  /* base surface, dominant                     */
+  --navy-deep: #011246;  /* section alternation, footer                */
+  --cream:     #F8F1E4;  /* primary text, primary buttons     12.6:1   */
+  --mist:      #D8E3FF;  /* secondary text, links, borders    11.0:1   */
+  --amber:     #E8A33D;  /* MAP ONLY — see note below          6.5:1   */
+  --steel:     #6C7FB5;  /* muted labels, context roads        3.4:1   */
+
+  /* --amber is restricted to the map component. It measures 1.9:1 on
+     cream, so it can never carry text on a light surface, and keeping it
+     to the corridor makes that the single warm thing on the site. Do not
+     reach for it in a button, an icon or a hover state. */
+
+  /* Derived surface and line values, so no component writes a raw rgba. */
+  --glass-fill:     rgba(1, 31, 123, 0.55);    /* navy at 55%          */
+  --glass-shadow:   0 8px 32px rgba(1, 10, 45, 0.38);
+  --border:         rgba(216, 227, 255, 0.12); /* mist at 12%          */
+  --border-strong:  rgba(216, 227, 255, 0.22);
+  --fill-subtle:    rgba(216, 227, 255, 0.05);
+  --fill-hover:     rgba(216, 227, 255, 0.09);
+
+  /* Text roles, so components ask for a job rather than a colour. */
+  --text-primary:   var(--cream);
+  --text-secondary: var(--mist);
+  --text-muted:     var(--steel);
+
+  /* Focus. The PRD specifies an amber ring; amber is reserved for the
+     map, so the ring is mist — which is also the stronger contrast
+     (11.0:1 against navy, against amber's 6.5:1). The PRD's geometry is
+     kept exactly: 2px at 3px offset, and it is never removed. */
+  --focus-ring:        var(--mist);
+  --focus-ring-width:  2px;
+  --focus-ring-offset: 3px;
+
+  /* --- Typography --------------------------------------------------- */
+
+  --font-display: "Archivo", ui-sans-serif, system-ui, sans-serif;
+  --font-body:    "Archivo", ui-sans-serif, system-ui, sans-serif;
+  --font-mono:    "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* Archivo carries a width axis. Semi-expanded on display sizes echoes
+     the squarish geometry of the ZG mark without imitating it. */
+  --width-display: 110;
+  --width-normal:  100;
+
+  --weight-display: 700;
+  --weight-heading: 600;
+  --weight-body:    400;
+  --weight-mono:    500;
+
+  --size-display: clamp(2.75rem, 6.5vw, 5.25rem);
+  --size-h2:      clamp(1.875rem, 3.2vw, 2.75rem);
+  --size-h3:      clamp(1.125rem, 1.6vw, 1.375rem);
+  --size-lede:    clamp(1.0625rem, 1.5vw, 1.3125rem);
+  --size-body:    1.0625rem;   /* 17px */
+  --size-small:   0.9375rem;   /* 15px */
+  --size-mono:    0.6875rem;   /* 11px */
+  --size-figure:  clamp(2.5rem, 5vw, 4rem);
+
+  --tracking-display: -0.025em;
+  --tracking-h2:      -0.022em;
+  --tracking-h3:      -0.015em;
+  --tracking-mono:    0.1em;
+
+  --leading-display: 1.02;
+  --leading-h2:      1.1;
+  --leading-h3:      1.25;
+  --leading-body:    1.6;
+
+  /* --- Spacing and grid ---------------------------------------------- */
+
+  --max-width:    1320px;
+  --gutter:       44px;
+  --section-pad:  112px;
+
+  --space-2:  2px;
+  --space-4:  4px;
+  --space-8:  8px;
+  --space-12: 12px;
+  --space-16: 16px;
+  --space-20: 20px;
+  --space-24: 24px;
+  --space-32: 32px;
+  --space-40: 40px;
+  --space-56: 56px;
+  --space-72: 72px;
+
+  /* Radius is 4px everywhere except buttons, which are 2px. */
+  --radius:        4px;
+  --radius-button: 2px;
+
+  /* --- Glass ---------------------------------------------------------- */
+
+  --glass-blur: 18px;
+  --glass-saturate: 160%;
+
+  /* --- Motion --------------------------------------------------------- *
+   * Durations and easings live in src/lib/motion.js and are imported from
+   * there by every component. The only timing here is the CSS-only hover
+   * transition, which the PRD fixes at 0.25s on Snap (power4.out).        */
+  --hover-duration: 0.25s;
+  --hover-ease: cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+@media (max-width: 1000px) {
+  :root {
+    /* Blur drops below 1000px for performance, per the PRD. */
+    --glass-blur: 14px;
+  }
+}
+
+@media (max-width: 768px) {
+  :root {
+    --gutter: 22px;
+    --section-pad: 64px;
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * Reset and base
+ * ------------------------------------------------------------------ */
+
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: auto; /* ScrollSmoother owns scrolling; see motion.js */
+}
+
+body {
+  margin: 0;
+  background: var(--navy);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: var(--size-body);
+  font-weight: var(--weight-body);
+  line-height: var(--leading-body);
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4, p, figure, blockquote, dl, dd { margin: 0; }
+ul, ol { margin: 0; padding: 0; list-style: none; }
+img, svg { display: block; max-width: 100%; }
+
+a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color var(--hover-duration) var(--hover-ease);
+}
+a:hover { color: var(--text-primary); }
+
+button, input, select, textarea {
+  font: inherit;
+  color: inherit;
+}
+
+/* Focus is never removed. Mouse users do not see it; keyboard users must. */
+:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+/* ------------------------------------------------------------------ *
+ * Surfaces
+ *
+ * .glass is for FLOATING surfaces only — the nav, cards that sit over
+ * the map, form containers. A flat section with nothing behind it uses
+ * .solid instead. Glass over nothing is just a muddy rectangle.
+ * ------------------------------------------------------------------ */
+
+.glass {
+  background: var(--glass-fill);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--glass-shadow);
+}
+
+/* Safari before 18 only knows the prefixed property. It lives in its own
+   @supports block because the CSS minifier collapses a prefixed and an
+   unprefixed declaration written in the same rule and keeps only one of
+   them — which silently ships glass with no blur. */
+@supports (-webkit-backdrop-filter: blur(1px)) {
+  .glass {
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  }
+}
+
+.solid {
+  background: var(--navy-deep);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+/* Where transparency is switched off at the OS level, glass falls back to
+   the nearest opaque surface rather than a fourth, invented tint. */
+@media (prefers-reduced-transparency: reduce) {
+  .glass {
+    background: var(--navy-deep);
+    backdrop-filter: none;
+  }
+  @supports (-webkit-backdrop-filter: blur(1px)) {
+    .glass { -webkit-backdrop-filter: none; }
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * Layout helpers
+ * ------------------------------------------------------------------ */
+
+.shell {
+  width: 100%;
+  max-width: var(--max-width);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+.section {
+  padding-block: var(--section-pad);
+}
+
+.section--deep { background: var(--navy-deep); }
+
+/* ------------------------------------------------------------------ *
+ * Type utilities
+ * ------------------------------------------------------------------ */
+
+.display {
+  font-family: var(--font-display);
+  font-weight: var(--weight-display);
+  font-variation-settings: "wdth" var(--width-display);
+  font-size: var(--size-display);
+  letter-spacing: var(--tracking-display);
+  line-height: var(--leading-display);
+  text-wrap: balance;
+}
+
+.h2 {
+  font-family: var(--font-display);
+  font-weight: var(--weight-heading);
+  font-variation-settings: "wdth" var(--width-display);
+  font-size: var(--size-h2);
+  letter-spacing: var(--tracking-h2);
+  line-height: var(--leading-h2);
+  text-wrap: balance;
+}
+
+.h3 {
+  font-family: var(--font-display);
+  font-weight: var(--weight-heading);
+  font-size: var(--size-h3);
+  letter-spacing: var(--tracking-h3);
+  line-height: var(--leading-h3);
+}
+
+.lede {
+  font-size: var(--size-lede);
+  line-height: 1.45;
+  color: var(--text-secondary);
+  text-wrap: pretty;
+}
+
+.prose { color: var(--text-secondary); text-wrap: pretty; }
+.prose + .prose { margin-top: var(--space-20); }
+
+/* Mono is for things that are literally data — tonnages, road refs,
+   timestamps, eyebrow labels. Never for decoration. */
+.mono {
+  font-family: var(--font-mono);
+  font-weight: var(--weight-mono);
+  font-size: var(--size-mono);
+  letter-spacing: var(--tracking-mono);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.figure {
+  font-family: var(--font-display);
+  font-weight: var(--weight-display);
+  font-variation-settings: "wdth" var(--width-display);
+  font-size: var(--size-figure);
+  letter-spacing: var(--tracking-display);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------------ *
+ * Buttons
+ * ------------------------------------------------------------------ */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-8);
+  min-height: 44px;
+  padding: var(--space-12) var(--space-24);
+  border: 1px solid transparent;
+  border-radius: var(--radius-button);
+  font-weight: var(--weight-heading);
+  font-size: var(--size-small);
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  transition: background-color var(--hover-duration) var(--hover-ease),
+              color var(--hover-duration) var(--hover-ease),
+              border-color var(--hover-duration) var(--hover-ease);
+}
+
+.btn--primary {
+  background: var(--cream);
+  color: var(--navy);
+}
+.btn--primary:hover { background: var(--mist); color: var(--navy); }
+
+.btn--ghost {
+  background: transparent;
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+.btn--ghost:hover { background: var(--fill-hover); color: var(--text-primary); }
+
+/* ------------------------------------------------------------------ *
+ * Motion support
+ *
+ * Elements that JS will animate start hidden, but ONLY when JS is
+ * available to reveal them — otherwise a failed script leaves a blank
+ * page. The .js class is set on <html> by the layout before paint.
+ * ------------------------------------------------------------------ */
+
+.js [data-lift],
+.js [data-reveal-h1],
+.js [data-reveal] { opacity: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .js [data-lift],
+  .js [data-reveal-h1],
+  .js [data-reveal] { opacity: 1; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px; height: 1px;
+  margin: -1px; padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.skip-link {
+  position: absolute;
+  top: var(--space-8);
+  left: var(--space-8);
+  z-index: 100;
+  padding: var(--space-12) var(--space-20);
+  background: var(--cream);
+  color: var(--navy);
+  border-radius: var(--radius-button);
+  transform: translateY(-200%);
+}
+.skip-link:focus-visible { transform: translateY(0); }

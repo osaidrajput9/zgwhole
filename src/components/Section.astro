@@ -1,0 +1,28 @@
+---
+/* A standard content section. `deep` alternates the background to
+   navy-deep. Sections are flat surfaces — anything that needs a
+   container here uses .solid, never .glass. */
+
+interface Props {
+  id?: string;
+  eyebrow?: string;
+  title?: string;
+  deep?: boolean;
+  class?: string;
+}
+const { id, eyebrow, title, deep = false, class: className = "" } = Astro.props;
+---
+
+<section id={id} class={`section ${deep ? "section--deep" : ""} ${className}`.trim()}>
+  <div class="shell" data-lift-group>
+    {eyebrow && <p class="mono section__eyebrow" data-lift>{eyebrow}</p>}
+    {title && <h2 class="h2 section__title" data-reveal>{title}</h2>}
+    <slot />
+  </div>
+</section>
+
+<style>
+  .section__eyebrow { margin-bottom: var(--space-20); }
+  .section__title { max-width: 22ch; }
+  .section__title + :global(*) { margin-top: var(--space-56); }
+</style>

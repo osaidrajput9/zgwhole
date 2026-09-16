@@ -1,0 +1,161 @@
+---
+/* Footer — flat, so it is a solid navy-deep surface, not glass.
+   Orders and Assigned vehicle tracking live here only, until they are
+   real products rather than placeholders. */
+
+import Logo from "./Logo.astro";
+
+const services = [
+  { href: "/edible-oil-transportation", label: "Edible oil transportation" },
+  { href: "/molasses-transportation",   label: "Molasses transportation" },
+  { href: "/containers-finished-goods", label: "Containers and finished goods" },
+];
+
+const company = [
+  { href: "/fleet",   label: "Fleet" },
+  { href: "/about",   label: "About" },
+  { href: "/contact", label: "Contact" },
+];
+
+/* PLACEHOLDER: the head-office street address and the telephone number
+   are not in the brief. Port Qasim below is the confirmed address. */
+
+const portal = [
+  { href: "/orders",   label: "Orders" },
+  { href: "/tracking", label: "Assigned vehicle tracking" },
+];
+---
+
+<footer class="footer">
+  <div class="shell footer__inner">
+    <div class="footer__brand">
+      <a class="footer__brand-link" href="/" aria-label="Zia Goods and Carriage Contractor — home">
+        <Logo height="34px" />
+      </a>
+      <p class="footer__line">Bulk liquid haulage across Pakistan since 1991.</p>
+    </div>
+
+    <div class="footer__col">
+      <h2 class="mono footer__label">Head office</h2>
+      <address class="footer__address">
+        Karachi, Sindh<br />
+        <span data-placeholder>Street address to be confirmed</span>
+      </address>
+
+      <h2 class="mono footer__label">Site office</h2>
+      <address class="footer__address">
+        Plot 290, Main National Highway,<br />
+        Razzakabad, Bin Qasim, Karachi
+      </address>
+
+      <h2 class="mono footer__label">Branch</h2>
+      <address class="footer__address">Sargodha, Punjab</address>
+    </div>
+
+    <div class="footer__col">
+      <h2 class="mono footer__label">Services</h2>
+      <ul class="footer__list">
+        {services.map((l) => <li><a href={l.href}>{l.label}</a></li>)}
+      </ul>
+
+      <h2 class="mono footer__label">Company</h2>
+      <ul class="footer__list">
+        {company.map((l) => <li><a href={l.href}>{l.label}</a></li>)}
+      </ul>
+    </div>
+
+    <div class="footer__col">
+      <h2 class="mono footer__label">Client portal</h2>
+      <ul class="footer__list">
+        {portal.map((l) => (
+          <li><a href={l.href}>{l.label} <span class="footer__soon">Coming soon</span></a></li>
+        ))}
+      </ul>
+
+      <h2 class="mono footer__label">Contact</h2>
+      <ul class="footer__list">
+        <li>M. Zeeshan Malik</li>
+        <li><a href="mailto:ziagoodsncarriage@gmail.com">ziagoodsncarriage@gmail.com</a></li>
+        <li data-placeholder>Telephone to be confirmed</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="shell footer__base">
+    <p class="mono">© 1991–2026 Zia Goods &amp; Carriage Contractor</p>
+    <p class="mono">We go everywhere. Nothing goes missing.</p>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    background: var(--navy-deep);
+    border-top: 1px solid var(--border);
+    padding-block: var(--space-72) var(--space-32);
+  }
+
+  .footer__inner {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1fr 1fr;
+    gap: var(--space-40);
+  }
+
+  .footer__brand-link { display: inline-flex; color: var(--cream); }
+
+  .footer__line {
+    margin-top: var(--space-20);
+    max-width: 26ch;
+    color: var(--text-muted);
+    font-size: var(--size-small);
+  }
+
+  .footer__label {
+    margin-bottom: var(--space-12);
+    font-weight: var(--weight-mono);
+  }
+  .footer__label:not(:first-child) { margin-top: var(--space-32); }
+
+  .footer__address {
+    font-style: normal;
+    font-size: var(--size-small);
+    color: var(--text-secondary);
+    line-height: 1.55;
+  }
+
+  .footer__list { font-size: var(--size-small); color: var(--text-secondary); }
+  .footer__list li + li { margin-top: var(--space-8); }
+
+  .footer__soon {
+    display: inline-block;
+    margin-inline-start: var(--space-8);
+    padding: 2px var(--space-8);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-button);
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: var(--tracking-mono);
+    text-transform: uppercase;
+    color: var(--text-muted);
+    vertical-align: 2px;
+  }
+
+  .footer__base {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-16);
+    margin-top: var(--space-72);
+    padding-top: var(--space-24);
+    border-top: 1px solid var(--border);
+  }
+
+  [data-placeholder] { color: var(--text-muted); }
+
+  @media (max-width: 900px) {
+    .footer__inner { grid-template-columns: 1fr 1fr; gap: var(--space-32); }
+  }
+
+  @media (max-width: 560px) {
+    .footer__inner { grid-template-columns: 1fr; }
+    .footer__base { flex-direction: column; }
+  }
+</style>
