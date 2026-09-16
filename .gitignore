@@ -1,5 +1,9 @@
 node_modules/
-dist/
-.astro/
+.next/
+out/
+build/
 .DS_Store
+*.pem
 npm-debug.log*
+.env*.local
+next-env.d.ts
