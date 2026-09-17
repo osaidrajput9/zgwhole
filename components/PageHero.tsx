@@ -21,8 +21,10 @@ export default function PageHero({
   title: string;
   lede: string;
   secondary?: ReactNode;
-  /** Pages without their own enquiry form route to Contact instead. */
-  ctaHref?: string;
+  /** Pages without their own enquiry form route to Contact instead.
+      Pass null where the page's primary element is directly below and a
+      button would only scroll past nothing. */
+  ctaHref?: string | null;
   ctaLabel?: string;
 }) {
   return (
@@ -40,12 +42,16 @@ export default function PageHero({
           {lede}
         </p>
 
-        <div className="mt-10 flex flex-wrap items-center gap-4" data-lift>
-          <a href={ctaHref} className="btn-base btn-filled">
-            {ctaLabel}
-          </a>
-          {secondary}
-        </div>
+        {(ctaHref || secondary) && (
+          <div className="mt-10 flex flex-wrap items-center gap-4" data-lift>
+            {ctaHref && (
+              <a href={ctaHref} className="btn-base btn-filled">
+                {ctaLabel}
+              </a>
+            )}
+            {secondary}
+          </div>
+        )}
       </div>
     </section>
   );
