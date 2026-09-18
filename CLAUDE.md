@@ -128,17 +128,45 @@ grep -rn 'amber' app components lib | grep -v 'PakistanMap\|globals.css'
 
 ## Built
 
-`/edible-oil-transportation`, `/molasses-transportation`, `/fleet`,
-`/contact`. `/` currently redirects to the edible oil page — **delete
-that redirect when the home page lands.**
+`/edible-oil-transportation`, `/molasses-transportation`, `/fleet` and
+`/contact` were built here. The signed-off home hero was built separately
+and merged in afterwards.
+
+Because the hero arrived from outside this history, **confirm the working
+tree before planning** rather than trusting this list:
+
+```
+find app -name 'page.tsx' | sort
+grep -rn 'redirect' app/page.tsx
+grep -rln 'svg' components | grep -i map
+```
+
+Three things the merge may have left to settle:
+
+- `app/page.tsx` held a redirect to the edible oil page as a stand-in for
+  the missing home page. If it is still there it shadows the real home —
+  delete it.
+- If the hero brought its own map, nav or glass CSS, reconcile rather than
+  keep both. Rule 8 allows one map component at three scales, and
+  `scale="hero"` had never been rendered before the merge, so check it at
+  full frame.
+- Any colour, font loading or easing the hero carried must fold into
+  `app/globals.css` and `lib/motion.js`. Run the grep audits above.
 
 ## Remaining, in order
 
-1. Home — hero exists and is signed off; sections below it per PRD
-2. Containers and finished goods — third service page, corridor map
-3. About — 1991 onward, `PakistanMap scale="inset"` for three branches
-4. Orders — placeholder, coming-soon block, no mock UI
-5. Assigned vehicle tracking — placeholder, same treatment
+1. Containers and finished goods — third service page, corridor map
+2. About — 1991 onward, `PakistanMap scale="inset"` for three branches
+3. Orders — placeholder, coming-soon block, no mock UI
+4. Assigned vehicle tracking — placeholder, same treatment
+5. Home sections below the hero, if the merge did not bring them — four
+   checks a day, what we move, dedicated stainless steel, fleet at a
+   glance, client wall, enquiry block (PRD § Home)
+
+## Working rules
+
+One page per turn. Show the plan before writing files. Verify in a
+browser, not on a green build.
 
 ## Launch blockers
 
